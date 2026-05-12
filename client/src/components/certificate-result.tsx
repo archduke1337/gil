@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Certificate } from "@/lib/types";
 import { useCallback } from "react";
+import { storage, BUCKET_ID } from "@/lib/appwrite";
 import jewelorsLogoPath from "@assets/jewelors-logo.png";
 
 interface CertificateResultProps {
@@ -269,7 +270,12 @@ export default function CertificateResult({ result }: CertificateResultProps) {
     if (certificate) {
       // If certificate has a file, open it
       if (certificate.filename) {
-        window.open(`/api/certificates/file/${certificate.referenceNumber}`, '_blank');
+        try {
+          const fileUrl = storage.getFileView(BUCKET_ID, certificate.filename);
+          window.open(fileUrl.toString(), '_blank');
+        } catch (e) {
+          console.error("Failed to fetch file view URL", e);
+        }
       } else {
         // For generated certificates, show certificate details in a new window
         showCertificateDetails(certificate);
@@ -280,12 +286,17 @@ export default function CertificateResult({ result }: CertificateResultProps) {
   const handleDownloadCertificate = useCallback(() => {
     if (certificate) {
       if (certificate.filename) {
-        const link = document.createElement('a');
-        link.href = `/api/certificates/file/${certificate.referenceNumber}`;
-        link.download = `${certificate.referenceNumber}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+          const fileUrl = storage.getFileDownload(BUCKET_ID, certificate.filename);
+          const link = document.createElement('a');
+          link.href = fileUrl.toString();
+          link.download = `${certificate.referenceNumber}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } catch (e) {
+          console.error("Failed to fetch file download URL", e);
+        }
       } else {
         // For generated certificates, open the printable view
         showCertificateDetails(certificate);
