@@ -42,8 +42,8 @@ export default function Verify() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/20 to-background">
       <SEOMeta
-        title="Diamond Certificate Verification - Instant Authentication"
-        description="Verify the authenticity of your GIL diamond certificate instantly. Enter your certificate reference number to access detailed grading information and ensure your gemstone's authenticity."
+        title="Certificate Verification - Instant Authentication"
+        description="Verify the authenticity of your GIL certificate instantly. Enter your certificate reference number to access detailed grading information and ensure your gemstone's authenticity."
         keywords="verify diamond certificate, GIL certificate check, diamond report verification, gemstone authentication, certificate reference number, diamond grading report"
         url="https://gilab.info/verify"
       />
@@ -61,7 +61,7 @@ export default function Verify() {
             Certificate Verification
           </h1>
           <p className="text-body-lg font-body text-muted-foreground max-w-2xl mx-auto mb-8 text-ultra-smooth">
-            Verify the authenticity of your diamond certificate using our secure verification system
+            Verify the authenticity of your certificate using our secure verification system
           </p>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function Verify() {
               <div className="bg-card rounded-3xl soft-shadow border-0 p-10">
                 <div className="text-center mb-10">
                   <h2 className="text-heading-md font-heading text-foreground mb-3 text-ultra-smooth">Enter Certificate Reference</h2>
-                  <p className="text-body font-body text-muted-foreground text-ultra-smooth">Input your diamond certificate reference number to view details</p>
+                  <p className="text-body font-body text-muted-foreground text-ultra-smooth">Input your certificate reference number to view details</p>
                 </div>
                 
                 <VerificationForm onResult={handleVerificationResult} />
