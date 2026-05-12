@@ -37,11 +37,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      // Use Appwrite Auth — email/password session
-      await account.createEmailPasswordSession({
-        email: data.email,
-        password: data.password,
-      });
+      await account.createEmailPasswordSession(data.email, data.password);
       toast({
         title: "Login Successful",
         description: "Welcome to the admin dashboard",
