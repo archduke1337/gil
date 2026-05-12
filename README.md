@@ -1,6 +1,6 @@
 # GIL Diamond Verification Platform
 
-A comprehensive gemological platform for diamond certificate verification and management.
+A comprehensive gemological platform for certificate verification and management.
 
 ## Features
 
