@@ -1,0 +1,59 @@
+{
+  "name": "GIL — Diamond Verification Platform",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "nvmVersion": "latest"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true
+    }
+  },
+
+  "forwardPorts": [5000],
+  "portsAttributes": {
+    "5000": {
+      "label": "GIL Dev Server",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  "postCreateCommand": "npm install && npm install -g appwrite-cli",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "typescript.preferences.importModuleSpecifier": "non-relative",
+        "files.exclude": {
+          "**/node_modules": true,
+          "**/dist": true
+        }
+      },
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "Appwrite.appwrite-vscode"
+      ]
+    }
+  },
+
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  },
+
+  "mounts": [],
+  "runArgs": ["--init"]
+}

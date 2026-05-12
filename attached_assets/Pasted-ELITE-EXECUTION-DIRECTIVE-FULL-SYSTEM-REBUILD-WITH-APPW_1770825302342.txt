@@ -1,0 +1,287 @@
+ELITE EXECUTION DIRECTIVE — FULL SYSTEM REBUILD WITH APPWRITE
+
+You are acting as a Senior Software Architect performing a controlled modernization of an unstable codebase.
+
+This is NOT a feature addition.
+This is a structured architectural reset.
+
+You must think before you code.
+
+────────────────────────────────────
+
+GLOBAL OPERATING RULES
+
+NEVER modify files before completing a full audit.
+
+NEVER generate new files without a structural plan.
+
+NEVER duplicate logic.
+
+NEVER migrate flawed legacy patterns.
+
+NEVER leave placeholder implementations.
+
+ALWAYS separate UI, services, and data layers.
+
+ALWAYS optimize for long-term maintainability.
+
+ALWAYS produce production-grade code only.
+
+If something is unclear in the codebase, inspect it.
+Do not guess.
+
+────────────────────────────────────
+
+PHASE 0 — STRUCTURAL AUDIT (MANDATORY)
+
+Before writing or deleting anything:
+
+Map the entire file tree.
+
+Identify:
+• duplicate components
+• duplicate APIs
+• multiple certificate generators
+• admin panel implementations
+• inconsistent routing
+• unused files
+• broken imports
+• schema inconsistencies
+• environment misconfigurations
+
+Output a short structured audit summary:
+
+Problems found
+
+Files to delete
+
+Files to refactor
+
+Structural risks
+
+Do NOT modify code until this audit is complete.
+
+────────────────────────────────────
+
+PHASE 1 — CLEAN REMOVAL
+
+You must permanently remove:
+
+• Existing admin panel (all versions)
+• BOTH certificate generators
+• Redundant APIs
+• Duplicate utilities
+• Dead routes
+• Unused pages
+• Unused dependencies
+
+Then normalize structure to:
+
+/src
+/components
+/pages
+/services
+/lib
+/utils
+/types
+
+/appwrite
+client.ts
+auth.ts
+database.ts
+storage.ts
+
+Enforce:
+
+• PascalCase for components
+• camelCase for functions
+• kebab-case for folders
+• No ambiguous filenames
+• No index file confusion
+
+────────────────────────────────────
+
+PHASE 2 — APPWRITE BACKEND ARCHITECTURE
+
+Appwrite is now the single backend system.
+
+Integrate:
+
+• Authentication (admins only)
+• Database
+• Storage
+
+NO public registration.
+Admins are pre-created manually in Appwrite console.
+
+Create a service layer:
+
+/services/certificateService.ts
+/services/adminService.ts
+
+UI must NEVER directly call Appwrite SDK.
+
+────────────────────────────────────
+
+DATABASE DESIGN
+
+Collection: certificates
+
+Fields:
+
+certificateId (unique string)
+
+referenceNo (unique, indexed)
+
+recipientName (string)
+
+fileId (string)
+
+uploadedBy (string)
+
+createdAt (datetime)
+
+Enforce uniqueness on referenceNo.
+Handle duplicate submission errors gracefully.
+
+────────────────────────────────────
+
+STORAGE
+
+Bucket: certificate-files
+
+Rules:
+• Private bucket
+• Admin write only
+• Signed URL retrieval
+• No public file exposure
+
+────────────────────────────────────
+
+PHASE 3 — ADMIN PANEL (REBUILT FROM ZERO)
+
+Minimal. Professional. Functional.
+
+Routes:
+
+/admin/login
+
+/admin/dashboard
+
+Capabilities:
+
+Secure login
+
+Upload certificate
+
+Upload file to storage
+
+Store metadata in database
+
+Prevent duplicate reference numbers
+
+View uploaded certificates
+
+Table view
+
+Columns:
+Reference No
+Recipient Name
+Upload Date
+File Preview Link
+
+Search by reference number
+
+No visual clutter.
+No unnecessary libraries.
+
+────────────────────────────────────
+
+PHASE 4 — PUBLIC VERIFICATION PAGE
+
+Route: /verify
+
+Flow:
+
+User enters reference number
+
+Query database
+
+If exists:
+Show:
+Recipient Name
+Upload Date
+Secure preview link (signed)
+
+If not:
+Display “Invalid Certificate”
+
+Never expose fileId directly.
+Never expose bucket path.
+Always use signed URLs.
+
+────────────────────────────────────
+
+SECURITY REQUIREMENTS
+
+• Admin session validation on dashboard access
+• Route protection middleware
+• Environment variables properly isolated
+• No secret leakage in frontend bundle
+• Defensive error handling
+• Clear user-safe error messages
+
+────────────────────────────────────
+
+CODE QUALITY STANDARDS
+
+• Modular
+• Typed where applicable
+• Clean async handling
+• No console debugging left in production
+• No commented-out legacy code
+• No redundant re-renders
+• Clear separation of concerns
+
+────────────────────────────────────
+
+EXECUTION ORDER (STRICT)
+
+Audit report
+
+Cleanup & structural normalization
+
+Appwrite client setup
+
+Service layer implementation
+
+Admin authentication
+
+Certificate upload flow
+
+Dashboard listing
+
+Public verification page
+
+Full end-to-end validation
+
+Do not jump ahead.
+
+────────────────────────────────────
+
+COMPLETION CRITERIA
+
+System is complete only when:
+
+✓ Admin can log in securely
+✓ Admin can upload certificate
+✓ Reference number stored uniquely
+✓ File stored privately
+✓ Admin can view uploaded certificates
+✓ Public can verify by reference number
+✓ Signed URL works
+✓ No legacy duplicate architecture remains
+
+Operate like production launch is in 24 hours.
+
+Think. Then execute.
