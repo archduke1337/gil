@@ -344,40 +344,7 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                     </div>
                   </dl>
                 </div>
-                {/*
-                {(certificate.caratWeight || certificate.colorGrade || certificate.clarityGrade || certificate.cutGrade) && (
-                  <div>
-                    <h4 className="text-lg font-semibold text-foreground mb-4">Specifications</h4>
-                    <dl className="space-y-3">
-                      {certificate.caratWeight && (
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Carat Weight:</dt>
-                          <dd className="font-medium text-foreground">{certificate.caratWeight} ct</dd>
-                        </div>
-                      )}
-                      {certificate.colorGrade && (
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Color Grade:</dt>
-                          <dd className="font-medium text-foreground">{certificate.colorGrade}</dd>
-                        </div>
-                      )}
-                      {certificate.clarityGrade && (
-                        <div className="flex justify-between">
-                          <dt className="text-muted-foreground">Clarity Grade:</dt>
-                          <dd className="font-medium text-foreground">{certificate.clarityGrade}</dd>
-                        </div>
-                      )}
-                      {certificate.cutGrade && (
-                        <div className="flex justify-between">
-                          <dt className="text-gray-600">Cut Grade:</dt>
-                          <dd className="font-medium text-gray-900">{certificate.cutGrade}</dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
-                )}
               </div>
-                */}
               <div className="space-y-6">
                 {/* Certificate Preview */}
                 <div className="bg-gray-50 rounded-lg p-6 text-center">
@@ -431,36 +398,7 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                 </div>
               </div>
             </div>
-          {/*  
-            {/* Buy Similar Certified Gemstones CTA */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-[#8c745c]/5 to-[#8c745c]/10 rounded-lg border border-[#8c745c]/20">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-100">
-                    <img 
-                      src={jewelorsLogoPath} 
-                      alt="Jewelors Logo" 
-                      className="w-8 h-5 object-contain"
-                    />
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">Shop Similar Certified Gemstones</h4>
-                    <p className="text-sm text-gray-600">
-                      Browse our collection of authentic GIL-certified gemstones at Jewelors
-                    </p>
-                  </div>
-                </div>
-                <a 
-                  href="https://jewelors.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center bg-gradient-to-r from-[#8c745c] to-[#a18966] hover:from-[#7a6650] hover:to-[#8c745c] text-white font-medium px-6 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Shop Now
-                </a>
-              </div>
-            </div> */}
+
           </Card>
         ) : (
           <Card className="bg-card rounded-2xl shadow-xl border border-border p-8">
