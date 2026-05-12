@@ -74,11 +74,11 @@ export default function UploadFormComponent({ onSuccess }: UploadFormProps) {
     setIsLoading(true);
     try {
       // 1. Upload file to Appwrite Storage
-      const uploaded = await storage.createFile({
-        bucketId: BUCKET_ID,
-        fileId: ID.unique(),
-        file: selectedFile,
-      });
+      const uploaded = await storage.createFile(
+        BUCKET_ID,
+        ID.unique(),
+        selectedFile
+      );
 
       // 2. Create certificate document in Appwrite Database
       await databases.createDocument(DB_ID, TABLE_ID, ID.unique(), {

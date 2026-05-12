@@ -44,7 +44,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const handleLogout = useCallback(async () => {
     try {
-      await account.deleteSession({ sessionId: 'current' });
+      await account.deleteSession('current');
     } catch { /* session may already be expired */ }
     toast({
       title: "Logged Out",

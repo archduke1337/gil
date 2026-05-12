@@ -29,7 +29,7 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
     if (!certificate.filename) return null;
     // filename stores the Appwrite file ID
     try {
-      const result = storage.getFileView({ bucketId: BUCKET_ID, fileId: certificate.filename });
+      const result = storage.getFileView(BUCKET_ID, certificate.filename);
       return result.toString();
     } catch {
       return null;
@@ -106,7 +106,7 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
       // Also delete the file from storage if present
       if (certificate.filename) {
         try {
-          await storage.deleteFile({ bucketId: BUCKET_ID, fileId: certificate.filename });
+          await storage.deleteFile(BUCKET_ID, certificate.filename);
         } catch {
           // File may already be gone — not fatal
         }
