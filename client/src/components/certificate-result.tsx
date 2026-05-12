@@ -329,21 +329,11 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                   <dl className="space-y-3">
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Reference Number:</dt>
-                      <dd className="font-medium text-foreground">{certificate.referenceNumber}</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Issue Date:</dt>
-                      <dd className="font-medium text-foreground">
-                        {certificate.issueDate ? new Date(certificate.issueDate).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        }) : 'Not specified'}
-                      </dd>
+                      <dd className="font-medium text-foreground">{certificate.referenceNumber}</dd> 
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Certificate Type:</dt>
-                      <dd className="font-medium text-foreground">Diamond Grading Report</dd>
+                      <dd className="font-medium text-foreground">Grading Report</dd>
                     </div>
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Status:</dt>
@@ -354,10 +344,10 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                     </div>
                   </dl>
                 </div>
-
+/*
                 {(certificate.caratWeight || certificate.colorGrade || certificate.clarityGrade || certificate.cutGrade) && (
                   <div>
-                    <h4 className="text-lg font-semibold text-foreground mb-4">Diamond Specifications</h4>
+                    <h4 className="text-lg font-semibold text-foreground mb-4">Specifications</h4>
                     <dl className="space-y-3">
                       {certificate.caratWeight && (
                         <div className="flex justify-between">
@@ -387,7 +377,7 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                   </div>
                 )}
               </div>
-
+*/
               <div className="space-y-6">
                 {/* Certificate Preview */}
                 <div className="bg-gray-50 rounded-lg p-6 text-center">
