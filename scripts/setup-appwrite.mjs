@@ -110,7 +110,12 @@ await safeCreate(`Collection: ${CERTS_ID}`, () =>
     DB_ID,
     CERTS_ID,
     'Certificates',
-    [Permission.read(Role.any())],   // public read
+    [
+      Permission.read(Role.any()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users())
+    ],
     false,  // documentSecurity — row-level off (table-level permissions used)
     true    // enabled
   )
@@ -222,6 +227,9 @@ await safeCreate(`Bucket: ${BUCKET_ID}`, () =>
     'Certificates',
     [
       Permission.read(Role.any()),
+      Permission.create(Role.users()),
+      Permission.update(Role.users()),
+      Permission.delete(Role.users())
     ],
     false,           // fileSecurity
     true,            // enabled
