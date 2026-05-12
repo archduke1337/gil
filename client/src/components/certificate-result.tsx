@@ -431,7 +431,7 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                 </div>
               </div>
             </div>
-            
+          /*  
             {/* Buy Similar Certified Gemstones CTA */}
             <div className="mt-8 p-6 bg-gradient-to-r from-[#8c745c]/5 to-[#8c745c]/10 rounded-lg border border-[#8c745c]/20">
               <div className="flex items-center justify-between">
@@ -460,7 +460,7 @@ export default function CertificateResult({ result }: CertificateResultProps) {
                   Shop Now
                 </a>
               </div>
-            </div>
+            </div> */
           </Card>
         ) : (
           <Card className="bg-card rounded-2xl shadow-xl border border-border p-8">
