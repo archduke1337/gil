@@ -10,7 +10,7 @@ export function generatePageTitle(title: string, siteName = 'GIL'): string {
 }
 
 export function generateKeywords(baseKeywords: string[], additionalKeywords: string[] = []): string {
-  const allKeywords = [...new Set([...baseKeywords, ...additionalKeywords])];
+  const allKeywords = Array.from(new Set(baseKeywords.concat(additionalKeywords)));
   return allKeywords.join(', ');
 }
 
@@ -89,7 +89,7 @@ export function getRelatedPages(currentPage: string): { title: string; url: stri
     ]
   };
 
-  return pages[currentPage] || [];
+  return pages[currentPage as keyof typeof pages] || [];
 }
 
 // Generate breadcrumb items

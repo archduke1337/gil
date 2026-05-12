@@ -51,7 +51,7 @@ export default function VerificationForm({ onResult }: VerificationFormProps) {
           id: 0,
           uploadDate: doc.$createdAt,
           issueDate: doc.$createdAt,
-        } as Certificate;
+        } as unknown as Certificate;
 
         onResult({ certificate, found: true });
         toast({

@@ -741,7 +741,7 @@ export const AndalusiteSVG = ({ className = "", size = 64 }: GemSVGProps) => (
 );
 
 // Gem icon mapping
-export const gemIcons = {
+export const gemIcons: Record<string, React.FC<GemSVGProps>> = {
   "1": DiamondSVG,
   "2": RubySVG,
   "3": EmeraldSVG,

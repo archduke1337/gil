@@ -119,7 +119,7 @@ export default function AdvancedDashboard() {
     ]
   };
 
-  const currentStats = stats || mockStats;
+  const currentStats = (stats as DashboardStats) || mockStats;
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -376,7 +376,7 @@ export default function AdvancedDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {currentStats.recentActivity.map((activity) => (
+            {currentStats.recentActivity.map((activity: any) => (
               <div key={activity.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0">
                 <div className="flex items-center space-x-3">
                   <div className={`w-2 h-2 rounded-full ${

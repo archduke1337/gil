@@ -32,7 +32,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         Query.orderDesc("$createdAt"),
         Query.limit(100),
       ]);
-      return { certificates: result.documents as Certificate[] };
+      return { certificates: result.documents as unknown as Certificate[] };
     },
     retry: 2,
     retryDelay: 1000,
