@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Certificate } from "@shared/schema";
+import { databases, storage, DB_ID, TABLE_ID, BUCKET_ID } from "@/lib/appwrite";
+import type { Certificate } from "@/lib/types";
 
 interface CertificateListProps {
   certificates: Certificate[];
@@ -15,104 +15,56 @@ interface CertificateListProps {
 
 export default function CertificateList({ certificates, onUpdate }: CertificateListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const filteredCertificates = useMemo(() => 
+  const filteredCertificates = useMemo(() =>
     certificates.filter(cert =>
       (cert.referenceNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
       (cert.reportNumber?.toLowerCase().includes(searchQuery.toLowerCase()) || false)
     ), [certificates, searchQuery]
   );
 
+  const getFileUrl = (certificate: Certificate): string | null => {
+    if (!certificate.filename) return null;
+    // filename stores the Appwrite file ID
+    try {
+      const result = storage.getFileView({ bucketId: BUCKET_ID, fileId: certificate.filename });
+      return result.toString();
+    } catch {
+      return null;
+    }
+  };
+
   const handleViewCertificate = (certificate: Certificate) => {
-    // If certificate has a file, open it
-    if (certificate.filename) {
-      window.open(`/api/certificates/file/${certificate.referenceNumber}`, '_blank');
+    const fileUrl = getFileUrl(certificate);
+    if (fileUrl) {
+      window.open(fileUrl, '_blank');
     } else {
-      // For generated certificates, show certificate details in a modal or new page
       showCertificateDetails(certificate);
     }
   };
 
   const showCertificateDetails = (certificate: Certificate) => {
-    // Create a new window with certificate details
     const newWindow = window.open('', '_blank');
     if (newWindow) {
       newWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Certificate ${certificate.referenceNumber}</title>
+          <title>Certificate ${certificate.referenceNumber || certificate.reportNumber}</title>
           <style>
-            body { 
-              font-family: 'Inter', sans-serif; 
-              max-width: 800px; 
-              margin: 0 auto; 
-              padding: 20px; 
-              background: #f8f9fa;
-            }
-            .certificate { 
-              background: white; 
-              padding: 40px; 
-              border-radius: 12px; 
-              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-              margin: 20px 0;
-            }
-            .header { 
-              text-align: center; 
-              border-bottom: 2px solid hsl(24 95% 53%); 
-              padding-bottom: 20px; 
-              margin-bottom: 30px;
-            }
-            .title { 
-              color: hsl(24 95% 53%); 
-              font-size: 28px; 
-              font-weight: bold; 
-              margin: 0;
-            }
-            .subtitle { 
-              color: #666; 
-              font-size: 16px; 
-              margin: 5px 0 0 0;
-            }
-            .content { 
-              display: grid; 
-              grid-template-columns: 1fr 1fr; 
-              gap: 20px; 
-              margin: 20px 0;
-            }
-            .field { 
-              margin-bottom: 15px;
-            }
-            .label { 
-              font-weight: 600; 
-              color: #333; 
-              font-size: 14px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .value { 
-              color: #666; 
-              font-size: 16px; 
-              margin-top: 4px;
-            }
-            .full-width { 
-              grid-column: 1 / -1;
-            }
-            .reference { 
-              background: hsl(24 95% 53%); 
-              color: white; 
-              padding: 10px 20px; 
-              border-radius: 6px; 
-              font-weight: bold; 
-              text-align: center; 
-              margin: 20px 0;
-            }
-            @media print {
-              body { background: white; margin: 0; padding: 0; }
-              .certificate { box-shadow: none; margin: 0; }
-            }
+            body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
+            .certificate { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 20px 0; }
+            .header { text-align: center; border-bottom: 2px solid hsl(24 95% 53%); padding-bottom: 20px; margin-bottom: 30px; }
+            .title { color: hsl(24 95% 53%); font-size: 28px; font-weight: bold; margin: 0; }
+            .subtitle { color: #666; font-size: 16px; margin: 5px 0 0 0; }
+            .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+            .field { margin-bottom: 15px; }
+            .label { font-weight: 600; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+            .value { color: #666; font-size: 16px; margin-top: 4px; }
+            .full-width { grid-column: 1 / -1; }
+            .reference { background: hsl(24 95% 53%); color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; text-align: center; margin: 20px 0; }
           </style>
         </head>
         <body>
@@ -121,118 +73,22 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
               <h1 class="title">GEMOLOGICAL CERTIFICATE</h1>
               <p class="subtitle">Gemological Institute Laboratories</p>
             </div>
-            
-            <div class="reference">
-              Certificate No: ${certificate.referenceNumber}
-            </div>
-            
+            <div class="reference">Certificate No: ${certificate.referenceNumber || certificate.reportNumber}</div>
             <div class="content">
-              <div class="field">
-                <div class="label">Gem Type</div>
-                <div class="value">${certificate.gemType}</div>
-              </div>
-              <div class="field">
-                <div class="label">Shape</div>
-                <div class="value">${certificate.shape}</div>
-              </div>
-              <div class="field">
-                <div class="label">Measurements</div>
-                <div class="value">${certificate.measurements}</div>
-              </div>
-              <div class="field">
-                <div class="label">Carat Weight</div>
-                <div class="value">${certificate.caratWeight}</div>
-              </div>
-              <div class="field">
-                <div class="label">Color Grade</div>
-                <div class="value">${certificate.colorGrade}</div>
-              </div>
-              <div class="field">
-                <div class="label">Clarity Grade</div>
-                <div class="value">${certificate.clarityGrade}</div>
-              </div>
-              <div class="field">
-                <div class="label">Cut Grade</div>
-                <div class="value">${certificate.cutGrade}</div>
-              </div>
-              <div class="field">
-                <div class="label">Polish</div>
-                <div class="value">${certificate.polish || 'Not specified'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Symmetry</div>
-                <div class="value">${certificate.symmetry || 'Not specified'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Fluorescence</div>
-                <div class="value">${certificate.fluorescence || 'Not specified'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Treatment</div>
-                <div class="value">${certificate.treatment || 'Not specified'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Origin</div>
-                <div class="value">${certificate.origin || 'Not specified'}</div>
-              </div>
-              ${certificate.tablePercentage ? `
-              <div class="field">
-                <div class="label">Table %</div>
-                <div class="value">${certificate.tablePercentage}</div>
-              </div>
-              ` : ''}
-              ${certificate.depthPercentage ? `
-              <div class="field">
-                <div class="label">Depth %</div>
-                <div class="value">${certificate.depthPercentage}</div>
-              </div>
-              ` : ''}
-              ${certificate.crownAngle ? `
-              <div class="field">
-                <div class="label">Crown Angle</div>
-                <div class="value">${certificate.crownAngle}</div>
-              </div>
-              ` : ''}
-              ${certificate.pavilionAngle ? `
-              <div class="field">
-                <div class="label">Pavilion Angle</div>
-                <div class="value">${certificate.pavilionAngle}</div>
-              </div>
-              ` : ''}
-              ${certificate.inscription ? `
-              <div class="field full-width">
-                <div class="label">Inscription</div>
-                <div class="value">${certificate.inscription}</div>
-              </div>
-              ` : ''}
-              ${certificate.comments ? `
-              <div class="field full-width">
-                <div class="label">Comments</div>
-                <div class="value">${certificate.comments}</div>
-              </div>
-              ` : ''}
-              <div class="field">
-                <div class="label">Report Date</div>
-                <div class="value">${certificate.reportDate && certificate.reportDate !== null ? new Date(certificate.reportDate).toLocaleDateString() : 'N/A'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Gemologist</div>
-                <div class="value">${certificate.gemologistName}</div>
-              </div>
-              <div class="field">
-                <div class="label">Signature Date</div>
-                <div class="value">${certificate.signatureDate && certificate.signatureDate !== null ? new Date(certificate.signatureDate).toLocaleDateString() : 'N/A'}</div>
-              </div>
-              <div class="field">
-                <div class="label">Lab Location</div>
-                <div class="value">${certificate.labLocation || 'GIL Headquarters'}</div>
-              </div>
+              <div class="field"><div class="label">Gem Type</div><div class="value">${certificate.gemType || 'Diamond'}</div></div>
+              <div class="field"><div class="label">Shape</div><div class="value">${certificate.shape}</div></div>
+              <div class="field"><div class="label">Measurements</div><div class="value">${certificate.measurements}</div></div>
+              <div class="field"><div class="label">Carat Weight</div><div class="value">${certificate.caratWeight}</div></div>
+              <div class="field"><div class="label">Color Grade</div><div class="value">${certificate.colorGrade}</div></div>
+              <div class="field"><div class="label">Clarity Grade</div><div class="value">${certificate.clarityGrade}</div></div>
+              <div class="field"><div class="label">Cut Grade</div><div class="value">${certificate.cutGrade}</div></div>
+              <div class="field"><div class="label">Polish</div><div class="value">${certificate.polish || 'Not specified'}</div></div>
+              <div class="field"><div class="label">Symmetry</div><div class="value">${certificate.symmetry || 'Not specified'}</div></div>
+              <div class="field"><div class="label">Fluorescence</div><div class="value">${certificate.fluorescence || 'Not specified'}</div></div>
+              <div class="field"><div class="label">Report Date</div><div class="value">${certificate.reportDate ? new Date(certificate.reportDate).toLocaleDateString() : 'N/A'}</div></div>
+              <div class="field"><div class="label">Gemologist</div><div class="value">${certificate.gemologistName}</div></div>
             </div>
           </div>
-          <script>
-            // Auto print on load if desired
-            // window.print();
-          </script>
         </body>
         </html>
       `);
@@ -241,18 +97,30 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
   };
 
   const handleDeleteCertificate = async (certificate: Certificate) => {
-    setIsDeleting(certificate.id);
+    const docId = certificate.$id;
+    setIsDeleting(docId);
     try {
-      await apiRequest("DELETE", `/api/certificates/${certificate.id}`);
+      // Soft-delete: set isActive = false
+      await databases.updateDocument(DB_ID, TABLE_ID, docId, { isActive: false });
+
+      // Also delete the file from storage if present
+      if (certificate.filename) {
+        try {
+          await storage.deleteFile({ bucketId: BUCKET_ID, fileId: certificate.filename });
+        } catch {
+          // File may already be gone — not fatal
+        }
+      }
+
       toast({
         title: "Certificate Deleted",
-        description: `Certificate ${certificate.referenceNumber} has been deleted`,
+        description: `Certificate ${certificate.referenceNumber || certificate.reportNumber} has been removed`,
       });
       onUpdate();
     } catch (error: any) {
       toast({
         title: "Delete Failed",
-        description: error.message || "An error occurred while deleting the certificate",
+        description: error?.message || "An error occurred while deleting the certificate",
         variant: "destructive",
       });
     } finally {
@@ -288,12 +156,7 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
               className="pl-10 pr-4 py-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent transition-colors"
             />
           </div>
-          <Button
-            onClick={onUpdate}
-            variant="outline"
-            size="sm"
-            className="ml-4 px-4 py-2 transition-colors"
-          >
+          <Button onClick={onUpdate} variant="outline" size="sm" className="ml-4 px-4 py-2 transition-colors">
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -308,24 +171,19 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
                 {searchQuery ? "No matching certificates" : "No certificates found"}
               </h3>
               <p className="text-muted-foreground">
-                {searchQuery 
-                  ? "Try adjusting your search terms" 
-                  : "Upload your first certificate to get started"
-                }
+                {searchQuery ? "Try adjusting your search terms" : "Upload your first certificate to get started"}
               </p>
             </div>
           ) : (
             filteredCertificates.map((certificate) => (
-              <div key={certificate.id} className="border border-border rounded-lg p-4 hover:bg-accent transition-colors">
+              <div key={certificate.$id} className="border border-border rounded-lg p-4 hover:bg-accent transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <h3 className="font-semibold text-foreground">{certificate.referenceNumber}</h3>
+                    <h3 className="font-semibold text-foreground">{certificate.referenceNumber || certificate.reportNumber}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Uploaded: {certificate.uploadDate ? new Date(certificate.uploadDate).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
-                      }) : 'Date not available'}
+                      Uploaded: {certificate.$createdAt
+                        ? new Date(certificate.$createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                        : 'Date not available'}
                     </p>
                     <div className="flex items-center space-x-4 mt-2 text-xs text-muted-foreground">
                       {certificate.caratWeight && <span>{certificate.caratWeight} ct</span>}
@@ -346,13 +204,13 @@ export default function CertificateList({ certificates, onUpdate }: CertificateL
                     </Button>
                     <Button
                       onClick={() => handleDeleteCertificate(certificate)}
-                      disabled={isDeleting === certificate.id}
+                      disabled={isDeleting === certificate.$id}
                       variant="ghost"
                       size="sm"
                       className="p-2 text-destructive hover:bg-destructive/10 rounded transition-colors"
                       title="Delete Certificate"
                     >
-                      <Trash2 className={`w-4 h-4 ${isDeleting === certificate.id ? 'animate-spin' : ''}`} />
+                      <Trash2 className={`w-4 h-4 ${isDeleting === certificate.$id ? 'animate-spin' : ''}`} />
                     </Button>
                   </div>
                 </div>

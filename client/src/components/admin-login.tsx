@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import GemLoadingSpinner from "@/components/gem-loading-spinner";
+import { account } from "@/lib/appwrite";
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Enter a valid email"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -30,7 +29,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
   const form = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
@@ -38,7 +37,11 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/admin/login", data);
+      // Use Appwrite Auth — email/password session
+      await account.createEmailPasswordSession({
+        email: data.email,
+        password: data.password,
+      });
       toast({
         title: "Login Successful",
         description: "Welcome to the admin dashboard",
@@ -47,7 +50,10 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     } catch (error: any) {
       toast({
         title: "Login Failed",
-        description: error.message.includes("401") ? "Invalid credentials" : "An error occurred during login",
+        description:
+          error?.code === 401
+            ? "Invalid email or password"
+            : "An error occurred during login",
         variant: "destructive",
       });
     } finally {
@@ -72,14 +78,15 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-gray-700">Username</FormLabel>
+                      <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="admin"
+                          type="email"
+                          placeholder="admin@gillab.info"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors"
                         />
                       </FormControl>
@@ -87,7 +94,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="password"
@@ -98,7 +105,7 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
                         <Input
                           {...field}
                           type="password"
-                          placeholder="password"
+                          placeholder="••••••••"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors"
                         />
                       </FormControl>
@@ -107,16 +114,8 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
                   )}
                 />
 
-                <Alert className="bg-gray-50">
-                  <AlertDescription className="text-xs text-gray-500">
-                    <strong>Demo Credentials:</strong><br />
-                    Username: admin<br />
-                    Password: password
-                  </AlertDescription>
-                </Alert>
-                
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading}
                   className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
                 >

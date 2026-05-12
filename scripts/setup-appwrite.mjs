@@ -88,9 +88,18 @@ async function safeCreate(label, fn) {
 step('Creating database');
 const DB_ID = 'gil-db';
 
-await safeCreate(`Database: ${DB_ID}`, () =>
-  databases.create(DB_ID, 'GIL Database', true)
-);
+try {
+  await databases.get(DB_ID);
+  log(`Database: ${DB_ID} — already exists, skipping.`);
+} catch (err) {
+  if (err.code === 404) {
+    await safeCreate(`Database: ${DB_ID}`, () =>
+      databases.create(DB_ID, 'GIL Database', true)
+    );
+  } else {
+    throw err;
+  }
+}
 
 // ── 2. Create Certificates Collection ───────────────────────────
 step('Creating certificates collection');
@@ -216,7 +225,7 @@ await safeCreate(`Bucket: ${BUCKET_ID}`, () =>
     ],
     false,           // fileSecurity
     true,            // enabled
-    52_428_800,      // maximumFileSize: 50 MB
+    50_000_000,      // maximumFileSize: 50 MB
     ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'],
     'none',          // compression
     false,           // encryption

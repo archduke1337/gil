@@ -8,7 +8,7 @@ import { SEOMeta, StructuredData, SEOBreadcrumbs } from "@/components/seo-meta";
 import { OptimizedImage } from "@/components/image-optimized";
 import { InternalLinks } from "@/components/internal-links";
 import { generateBreadcrumbs } from "@/utils/seo-helpers";
-import type { Certificate } from "@shared/schema";
+import type { Certificate } from "@/lib/types";
 import logoPath from "@assets/1000119055-removebg-preview.png";
 
 export default function Verify() {

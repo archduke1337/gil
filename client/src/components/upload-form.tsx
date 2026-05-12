@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CloudUpload, Plus, X } from "lucide-react";
+import { CloudUpload, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import GemLoadingSpinner from "@/components/gem-loading-spinner";
+import { databases, storage, DB_ID, TABLE_ID, BUCKET_ID, ID } from "@/lib/appwrite";
 
 const uploadSchema = z.object({
   referenceNumber: z.string().min(1, "Reference number is required"),
@@ -55,64 +56,67 @@ export default function UploadFormComponent({ onSuccess }: UploadFormProps) {
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
+    if (file) setSelectedFile(file);
   };
 
   const clearFile = () => {
     setSelectedFile(null);
     const fileInput = document.getElementById('certificateFile') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
-    }
+    if (fileInput) fileInput.value = '';
   };
 
   const onSubmit = async (data: UploadForm) => {
     if (!selectedFile) {
-      toast({
-        title: "File Required",
-        description: "Please select a certificate file to upload",
-        variant: "destructive",
-      });
+      toast({ title: "File Required", description: "Please select a certificate file to upload", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('certificateFile', selectedFile);
-      formData.append('referenceNumber', data.referenceNumber);
-      
-      if (data.caratWeight) formData.append('caratWeight', data.caratWeight);
-      if (data.colorGrade) formData.append('colorGrade', data.colorGrade);
-      if (data.clarityGrade) formData.append('clarityGrade', data.clarityGrade);
-      if (data.cutGrade) formData.append('cutGrade', data.cutGrade);
-
-      const response = await fetch('/api/certificates/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
+      // 1. Upload file to Appwrite Storage
+      const uploaded = await storage.createFile({
+        bucketId: BUCKET_ID,
+        fileId: ID.unique(),
+        file: selectedFile,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Upload failed');
-      }
-
-      toast({
-        title: "Upload Successful",
-        description: "Certificate has been uploaded successfully",
+      // 2. Create certificate document in Appwrite Database
+      await databases.createDocument(DB_ID, TABLE_ID, ID.unique(), {
+        reportNumber:   data.referenceNumber,
+        referenceNumber: data.referenceNumber,
+        reportDate:     new Date().toISOString(),
+        shape:          data.shape          || "Round",
+        measurements:   data.measurements   || "N/A",
+        caratWeight:    data.caratWeight    || "0",
+        colorGrade:     data.colorGrade     || "G",
+        clarityGrade:   data.clarityGrade   || "VS1",
+        cutGrade:       data.cutGrade       || "Good",
+        polish:         data.polish         || "Good",
+        symmetry:       data.symmetry       || "Good",
+        fluorescence:   data.fluorescence   || "None",
+        gemologistName: "GIL Certified Gemologist",
+        signatureDate:  new Date().toISOString(),
+        gemType:        data.gemType        || "Diamond",
+        certificationDate: new Date().toISOString(),
+        examinedBy:     "GIL Certified Gemologist",
+        approvedBy:     "GIL Laboratory Director",
+        filename:       uploaded.$id,        // store Appwrite file ID
+        isActive:       true,
+        verifierUrl:    "https://gilab.info/verify",
       });
 
+      toast({ title: "Upload Successful", description: "Certificate has been uploaded successfully" });
       form.reset();
       clearFile();
       onSuccess();
     } catch (error: any) {
       console.error('Upload error:', error);
+      const isDuplicate = error?.code === 409 || error?.message?.includes('409');
       toast({
         title: "Upload Failed",
-        description: error.message.includes("409") ? "Reference number already exists" : error.message || "An error occurred while uploading the certificate",
+        description: isDuplicate
+          ? "Reference number already exists"
+          : error?.message || "An error occurred while uploading the certificate",
         variant: "destructive",
       });
     } finally {
@@ -140,9 +144,7 @@ export default function UploadFormComponent({ onSuccess }: UploadFormProps) {
               name="referenceNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-gray-700">
-                    Certificate Reference Number
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium text-gray-700">Certificate Reference Number</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -157,22 +159,14 @@ export default function UploadFormComponent({ onSuccess }: UploadFormProps) {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Certificate File
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Certificate File</label>
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-700 transition-colors cursor-pointer">
-                <input
-                  type="file"
-                  id="certificateFile"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
+                <input type="file" id="certificateFile" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileSelect} className="hidden" />
                 {!selectedFile ? (
                   <div onClick={() => document.getElementById('certificateFile')?.click()}>
                     <CloudUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 font-medium mb-2">Click to upload or drag and drop</p>
-                    <p className="text-sm text-gray-500">PDF, JPG, PNG files up to 10MB</p>
+                    <p className="text-sm text-gray-500">PDF, JPG, PNG files up to 50MB</p>
                   </div>
                 ) : (
                   <div>
@@ -189,127 +183,79 @@ export default function UploadFormComponent({ onSuccess }: UploadFormProps) {
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="caratWeight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Carat Weight</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        step="0.01"
-                        placeholder="1.52"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="caratWeight" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Carat Weight</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" step="0.01" placeholder="1.52"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
-              <FormField
-                control={form.control}
-                name="colorGrade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Color Grade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors">
-                          <SelectValue placeholder="Select Color" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="D">D</SelectItem>
-                        <SelectItem value="E">E</SelectItem>
-                        <SelectItem value="F">F</SelectItem>
-                        <SelectItem value="G">G</SelectItem>
-                        <SelectItem value="H">H</SelectItem>
-                        <SelectItem value="I">I</SelectItem>
-                        <SelectItem value="J">J</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="colorGrade" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Color Grade</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <SelectValue placeholder="Select Color" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {['D','E','F','G','H','I','J'].map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="clarityGrade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Clarity Grade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors">
-                          <SelectValue placeholder="Select Clarity" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="FL">FL</SelectItem>
-                        <SelectItem value="IF">IF</SelectItem>
-                        <SelectItem value="VVS1">VVS1</SelectItem>
-                        <SelectItem value="VVS2">VVS2</SelectItem>
-                        <SelectItem value="VS1">VS1</SelectItem>
-                        <SelectItem value="VS2">VS2</SelectItem>
-                        <SelectItem value="SI1">SI1</SelectItem>
-                        <SelectItem value="SI2">SI2</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="clarityGrade" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Clarity Grade</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <SelectValue placeholder="Select Clarity" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {['FL','IF','VVS1','VVS2','VS1','VS2','SI1','SI2'].map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
 
-              <FormField
-                control={form.control}
-                name="cutGrade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium text-gray-700">Cut Grade</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-700 focus:border-transparent transition-colors">
-                          <SelectValue placeholder="Select Cut" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Excellent">Excellent</SelectItem>
-                        <SelectItem value="Very Good">Very Good</SelectItem>
-                        <SelectItem value="Good">Good</SelectItem>
-                        <SelectItem value="Fair">Fair</SelectItem>
-                        <SelectItem value="Poor">Poor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <FormField control={form.control} name="cutGrade" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Cut Grade</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                        <SelectValue placeholder="Select Cut" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {['Excellent','Very Good','Good','Fair','Poor'].map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             </div>
 
             <div className="flex justify-end space-x-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={() => {
-                  form.reset();
-                  clearFile();
-                }}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-              >
+              <Button type="button" variant="outline" onClick={() => { form.reset(); clearFile(); }}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                 Clear Form
               </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors font-medium flex items-center justify-center space-x-2"
-              >
-                <Plus className="w-5 h-5" />
+              <Button type="submit" disabled={isLoading}
+                className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
+                {isLoading ? <GemLoadingSpinner size="sm" /> : <Plus className="w-5 h-5" />}
                 <span>{isLoading ? "Uploading..." : "Upload Certificate"}</span>
               </Button>
             </div>

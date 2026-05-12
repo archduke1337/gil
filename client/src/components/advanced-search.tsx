@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, Calendar, X } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Certificate } from "@shared/schema";
+import type { Certificate } from "@/lib/types";
 
 interface AdvancedSearchProps {
   certificates: Certificate[];

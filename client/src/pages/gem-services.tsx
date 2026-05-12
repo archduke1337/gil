@@ -9,7 +9,7 @@ import GemRarityHeatmap from "@/components/gem-rarity-heatmap";
 import CommunityShowcase from "@/components/community-showcase";
 import AdvancedSearch from "@/components/advanced-search";
 import { useQuery } from "@tanstack/react-query";
-import type { Certificate } from "@shared/schema";
+import type { Certificate } from "@/lib/types";
 import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function GemServices() {

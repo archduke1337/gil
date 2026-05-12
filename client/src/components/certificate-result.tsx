@@ -2,7 +2,7 @@ import { CheckCircle, AlertTriangle, Eye, Download, Shield, Lock, Calendar, Gem,
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Certificate } from "@shared/schema";
+import type { Certificate } from "@/lib/types";
 import { useCallback } from "react";
 import jewelorsLogoPath from "@assets/jewelors-logo.png";
 

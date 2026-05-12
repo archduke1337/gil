@@ -6,10 +6,10 @@ import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Certificate } from "@shared/schema";
 import GemLoadingSpinner from "@/components/gem-loading-spinner";
+import { databases, DB_ID, TABLE_ID, Query } from "@/lib/appwrite";
+import type { Certificate } from "@/lib/types";
 
 const verificationSchema = z.object({
   referenceNumber: z.string().min(1, "Reference number is required"),
@@ -27,19 +27,33 @@ export default function VerificationForm({ onResult }: VerificationFormProps) {
 
   const form = useForm<VerificationForm>({
     resolver: zodResolver(verificationSchema),
-    defaultValues: {
-      referenceNumber: "",
-    },
+    defaultValues: { referenceNumber: "" },
   });
 
   const onSubmit = useCallback(async (data: VerificationForm) => {
     setIsLoading(true);
     try {
-      const response = await apiRequest("GET", `/api/certificates/verify/${encodeURIComponent(data.referenceNumber)}`);
-      const result = await response.json();
-      
-      if (result.isValid && result.verificationResult?.certificate) {
-        onResult({ certificate: result.verificationResult.certificate, found: true });
+      // Query Appwrite database directly — no Express server needed
+      const result = await databases.listDocuments(DB_ID, TABLE_ID, [
+        Query.or([
+          Query.equal("reportNumber", data.referenceNumber),
+          Query.equal("referenceNumber", data.referenceNumber),
+        ]),
+        Query.equal("isActive", true),
+        Query.limit(1),
+      ]);
+
+      if (result.total > 0) {
+        const doc = result.documents[0];
+        // Map Appwrite document to Certificate shape
+        const certificate: Certificate = {
+          ...doc,
+          id: 0,
+          uploadDate: doc.$createdAt,
+          issueDate: doc.$createdAt,
+        } as Certificate;
+
+        onResult({ certificate, found: true });
         toast({
           title: "Certificate Found",
           description: "Certificate verification successful",
@@ -53,20 +67,12 @@ export default function VerificationForm({ onResult }: VerificationFormProps) {
         });
       }
     } catch (error: any) {
-      if (error.message.includes("404")) {
-        onResult({ certificate: null, found: false });
-        toast({
-          title: "Certificate Not Found",
-          description: "The reference number was not found in our database",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Verification Error",
-          description: "An error occurred while verifying the certificate",
-          variant: "destructive",
-        });
-      }
+      console.error("Verification error:", error);
+      toast({
+        title: "Verification Error",
+        description: "An error occurred while verifying the certificate",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -99,9 +105,9 @@ export default function VerificationForm({ onResult }: VerificationFormProps) {
             </FormItem>
           )}
         />
-        
-        <Button 
-          type="submit" 
+
+        <Button
+          type="submit"
           disabled={isLoading}
           className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
         >

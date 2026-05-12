@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Gem, LogOut, Upload, List, RefreshCw, FileUp, Search, Filter, Map, BookOpen, Users, Eye, Sparkles } from "lucide-react";
+import { LogOut, Upload, List, RefreshCw, FileUp, Search, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import UploadForm from "@/components/upload-form";
 import CertificateList from "@/components/certificate-list";
-
 import AdvancedSearch from "@/components/advanced-search";
-
-import { DashboardSkeleton, CertificateListSkeleton } from "@/components/skeleton-loader";
+import { DashboardSkeleton } from "@/components/skeleton-loader";
 import GemLoadingSpinner from "@/components/gem-loading-spinner";
 import { useToast } from "@/hooks/use-toast";
-import type { Certificate } from "@shared/schema";
+import type { Certificate } from "@/lib/types";
+import { databases, account, DB_ID, TABLE_ID, Query } from "@/lib/appwrite";
 import logoPath from "@assets/1000119055-removebg-preview.png";
 
 interface AdminDashboardProps {
@@ -28,25 +27,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const { data: certificatesData, refetch, isLoading, error } = useQuery({
     queryKey: ["certificates"],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/certificates", {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch certificates: ${response.status} ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        return data;
-      } catch (err) {
-        console.error('Certificate fetch error:', err);
-        throw err;
-      }
+      const result = await databases.listDocuments(DB_ID, TABLE_ID, [
+        Query.equal("isActive", true),
+        Query.orderDesc("$createdAt"),
+        Query.limit(100),
+      ]);
+      return { certificates: result.documents as Certificate[] };
     },
     retry: 2,
     retryDelay: 1000,
@@ -56,7 +42,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const certificates: Certificate[] = certificatesData?.certificates || [];
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = useCallback(async () => {
+    try {
+      await account.deleteSession({ sessionId: 'current' });
+    } catch { /* session may already be expired */ }
     toast({
       title: "Logged Out",
       description: "You have been logged out successfully",
